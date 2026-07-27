@@ -49,42 +49,42 @@
 </head>
 <body>
   <main>
-    <h1>ðŸ•µï¸ Detectives del pentagrama</h1>
-    <p class="subtitle">Observa la posiciÃ³n de la nota y descubre cÃ³mo se llama.</p>
+    <h1>🕵️ Detectives del pentagrama</h1>
+    <p class="subtitle">Observa la posición de la nota y descubre cómo se llama.</p>
     <section class="game" aria-label="Juego para identificar notas en el pentagrama">
-      <div class="top"><span>Aciertos: <span id="score">0</span> Â· Racha: <span id="streak">0</span> Â· Ronda <span id="round">1</span></span><div class="clefs" aria-label="Elegir clave"><button type="button" class="clef active" data-clef="treble" aria-pressed="true">ð„ž Clave de sol</button><button type="button" class="clef" data-clef="alto" aria-pressed="false">ð„¡ Clave de do</button><button type="button" class="clef" data-clef="bass" aria-pressed="false">ð„¢ Clave de fa</button></div></div>
+      <div class="top"><span>Aciertos: <span id="score">0</span> · Racha: <span id="streak">0</span> · Ronda <span id="round">1</span></span><div class="clefs" aria-label="Elegir clave"><button type="button" class="clef active" data-clef="treble" aria-pressed="true">𝄞 Clave de sol</button><button type="button" class="clef" data-clef="alto" aria-pressed="false">𝄡 Clave de do</button><button type="button" class="clef" data-clef="bass" aria-pressed="false">𝄢 Clave de fa</button></div></div>
       <div class="profiles" aria-label="Elegir personaje">
-        <p>Â¿QuiÃ©n juega?</p>
+        <p>¿Quién juega?</p>
         <div class="profile-list">
-          <button type="button" class="profile active" data-profile="luna" aria-pressed="true">ðŸŒ™ Luna</button>
-          <button type="button" class="profile" data-profile="leo" aria-pressed="false">ðŸ¦ Leo</button>
-          <button type="button" class="profile" data-profile="mia" aria-pressed="false">ðŸŒ¸ Mia</button>
-          <button type="button" class="profile" data-profile="nico" aria-pressed="false">ðŸš€ Nico</button>
+          <button type="button" class="profile active" data-profile="luna" aria-pressed="true">🌙 Luna</button>
+          <button type="button" class="profile" data-profile="leo" aria-pressed="false">🦁 Leo</button>
+          <button type="button" class="profile" data-profile="mia" aria-pressed="false">🌸 Mia</button>
+          <button type="button" class="profile" data-profile="nico" aria-pressed="false">🚀 Nico</button>
         </div>
       </div>
       <div class="staff-wrap"><svg id="staff" viewBox="0 0 650 220" role="img" aria-label="Pentagrama con una nota musical"><title>Identifica la nota del pentagrama</title></svg></div>
-      <h2>Â¿QuÃ© nota es?</h2>
+      <h2>¿Qué nota es?</h2>
       <div class="answers" id="answers"></div>
       <p id="message" aria-live="polite">Elige el nombre de la nota.</p>
-      <button class="next" id="next" type="button">Siguiente nota â†’</button>
+      <button class="next" id="next" type="button">Siguiente nota →</button>
       <div class="badges" aria-label="Insignias musicales">
-        <div class="badge" data-goal="3"><span class="instrument">ðŸ¥</span>Tambor Â· racha 3</div>
-        <div class="badge" data-goal="6"><span class="instrument">ðŸŽ¸</span>Guitarra Â· racha 6</div>
-        <div class="badge" data-goal="10"><span class="instrument">ðŸŽº</span>Trompeta Â· racha 10</div>
-        <div class="badge" data-goal="20"><span class="instrument">ðŸŽ»</span>ViolÃ­n Â· racha 20</div>
-        <div class="badge" data-goal="50"><span class="instrument">ðŸŽ¹</span>Piano Â· racha 50</div>
-        <div class="badge" data-goal="100"><span class="instrument">ðŸŽ¼</span>Arpa Â· racha 100</div>
-        <div class="badge silver" data-goal="200"><span class="instrument">ð„ž</span>Sol plata Â· 200</div>
-        <div class="badge gold" data-goal="500"><span class="instrument">ð„¡</span>Do oro Â· 500</div>
+        <div class="badge" data-goal="3"><span class="instrument">🥁</span>Tambor · racha 3</div>
+        <div class="badge" data-goal="6"><span class="instrument">🎸</span>Guitarra · racha 6</div>
+        <div class="badge" data-goal="10"><span class="instrument">🎺</span>Trompeta · racha 10</div>
+        <div class="badge" data-goal="20"><span class="instrument">🎻</span>Violín · racha 20</div>
+        <div class="badge" data-goal="50"><span class="instrument">🎹</span>Piano · racha 50</div>
+        <div class="badge" data-goal="100"><span class="instrument">🎼</span>Arpa · racha 100</div>
+        <div class="badge silver" data-goal="200"><span class="instrument">𝄞</span>Sol plata · 200</div>
+        <div class="badge gold" data-goal="500"><span class="instrument">𝄡</span>Do oro · 500</div>
       </div>
-      <p class="hint">Puedes cambiar de clave cuando quieras. Â¡FÃ­jate en las lÃ­neas y los espacios!</p>
+      <p class="hint">Puedes cambiar de clave cuando quieras. ¡Fíjate en las líneas y los espacios!</p>
     </section>
   </main>
   <script>
     const palettes = {
-      treble: { label:'clave de sol', symbol:'ð„ž', notes:[['DO',170],['RE',160],['MI',150],['FA',140],['SOL',130],['LA',120],['SI',110],['DO',100],['RE',90],['MI',80],['FA',70],['SOL',60]] },
-      alto: { label:'clave de do', symbol:'ð„¡', notes:[['FA',150],['SOL',140],['LA',130],['SI',120],['DO',110],['RE',100],['MI',90],['FA',80],['SOL',70],['LA',60],['SI',50]] },
-      bass: { label:'clave de fa', symbol:'ð„¢', notes:[['SOL',150],['LA',140],['SI',130],['DO',120],['RE',110],['MI',100],['FA',90],['SOL',80],['LA',70],['SI',60]] }
+      treble: { label:'clave de sol', symbol:'𝄞', notes:[['DO',170],['RE',160],['MI',150],['FA',140],['SOL',130],['LA',120],['SI',110],['DO',100],['RE',90],['MI',80],['FA',70],['SOL',60]] },
+      alto: { label:'clave de do', symbol:'𝄡', notes:[['FA',150],['SOL',140],['LA',130],['SI',120],['DO',110],['RE',100],['MI',90],['FA',80],['SOL',70],['LA',60],['SI',50]] },
+      bass: { label:'clave de fa', symbol:'𝄢', notes:[['SOL',150],['LA',140],['SI',130],['DO',120],['RE',110],['MI',100],['FA',90],['SOL',80],['LA',70],['SI',60]] }
     };
     const names = ['DO','RE','MI','FA','SOL','LA','SI'];
     const staff = document.querySelector('#staff'), answers = document.querySelector('#answers');
@@ -144,7 +144,7 @@
       let earned = '';
       badges.forEach(badge => {
         const goal = Number(badge.dataset.goal);
-        if (streak >= goal && !unlockedBadges.has(goal)) { unlockedBadges.add(goal); earned = badge.textContent.trim().split(' Â· ')[0]; }
+        if (streak >= goal && !unlockedBadges.has(goal)) { unlockedBadges.add(goal); earned = badge.textContent.trim().split(' · ')[0]; }
         badge.classList.toggle('unlocked', unlockedBadges.has(goal));
       });
       saveProgress();
@@ -188,11 +188,11 @@
         if (name === target[0]) {
           score++; streak++; scoreEl.textContent = score; streakEl.textContent = streak; btn.classList.add('correct');
           const earned = updateBadges();
-          message.textContent = earned ? `Â¡Insignia desbloqueada: ${earned}! ðŸŒŸ` : `Â¡Exacto! Racha de ${streak} ðŸŒŸ`; playTarget();
+          message.textContent = earned ? `¡Insignia desbloqueada: ${earned}! 🌟` : `¡Exacto! Racha de ${streak} 🌟`; playTarget();
           setTimeout(() => { round++; newRound(); }, 500);
         }
         else {
-          btn.classList.add('wrong'); streak = 0; streakEl.textContent = streak; updateBadges(); message.textContent = `Casiâ€¦ la respuesta era ${target[0]}.`;
+          btn.classList.add('wrong'); streak = 0; streakEl.textContent = streak; updateBadges(); message.textContent = `Casi… la respuesta era ${target[0]}.`;
           setTimeout(() => { round++; newRound(); }, 2000);
         }
       }); answers.append(btn);
@@ -208,5 +208,3 @@
   </script>
 </body>
 </html>
-
-
