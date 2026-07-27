@@ -1,0 +1,212 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Detectives del pentagrama</title>
+  <style>
+    :root { --ink:#26334a; --blue:#3877d6; --bg:#f4f8ff; --gold:#ffd65a; --good:#238653; --bad:#c94a4a; }
+    * { box-sizing:border-box; }
+    body { margin:0; min-height:100vh; display:grid; place-items:center; padding:24px; background:linear-gradient(145deg,#e0edff,#f9fbff 48%,#fff8dc); color:var(--ink); font-family:system-ui,-apple-system,"Segoe UI",sans-serif; }
+    main { width:min(720px,100%); text-align:center; }
+    h1 { margin:0; font-size:clamp(2rem,7vw,3.7rem); letter-spacing:-.06em; }
+    .subtitle { margin:8px 0 22px; font-size:1.15rem; }
+    .game { background:#fff; border-radius:28px; padding:clamp(20px,5vw,38px); box-shadow:0 18px 50px #406aa633; }
+    .top { display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap; margin-bottom:20px; font-weight:800; }
+    .profiles { margin:0 0 18px; }
+    .profiles p { margin:0 0 8px; font-weight:800; }
+    .profile-list { display:flex; justify-content:center; gap:8px; flex-wrap:wrap; }
+    .profile { min-width:92px; padding:8px 11px; border-radius:14px; background:#edf1f7; color:var(--ink); }
+    .profile.active { background:var(--blue); color:white; }
+    .badges { display:grid; grid-template-columns:repeat(4, minmax(0, 1fr)); gap:10px; margin:18px 0 4px; }
+    .badge { min-width:0; padding:9px 6px; border-radius:14px; background:#edf1f7; color:#67728a; font-size:.85rem; font-weight:800; opacity:.55; transition:opacity .2s, transform .2s, background .2s; }
+    .badge.unlocked { background:#fff1ae; color:var(--ink); opacity:1; transform:translateY(-2px); }
+    .badge.silver.unlocked { background:#e7edf6; }
+    .badge.gold.unlocked { background:#ffe084; }
+    .badge .instrument { display:block; font-size:1.45rem; line-height:1.1; }
+    .clefs { display:flex; gap:8px; }
+    button { border:0; font:inherit; font-weight:800; cursor:pointer; touch-action:manipulation; }
+    .clef, .next { padding:10px 14px; border-radius:999px; background:#eaf1fc; color:var(--ink); }
+    .clef.active { background:var(--blue); color:white; }
+    button:focus-visible { outline:4px solid var(--ink); outline-offset:3px; }
+    .staff-wrap { background:#edf4ff; border-radius:20px; padding:9px 8px; }
+    svg { display:block; width:100%; height:auto; }
+    .staff-line, .ledger { stroke:var(--ink); stroke-width:2; }
+    .note { fill:var(--blue); }
+    .stem { stroke:var(--blue); stroke-width:5; stroke-linecap:round; }
+    .clef-symbol { fill:var(--ink); font-family:"Noto Music","Segoe UI Symbol",serif; }
+    h2 { margin:22px 0 14px; font-size:1.3rem; }
+    .answers { display:grid; grid-template-columns:repeat(7,1fr); gap:8px; }
+    .answer { min-height:58px; border-radius:14px; background:#fff6cb; color:var(--ink); box-shadow:0 3px 0 #d7b33b; font-size:1.1rem; }
+    .answer:active { transform:translateY(3px); box-shadow:none; }
+    .answer.correct { background:#bcefd1; color:#14653e; box-shadow:0 3px 0 #5eae80; }
+    .answer.wrong { background:#ffd2d2; color:#962e2e; box-shadow:0 3px 0 #d78080; }
+    #message { min-height:1.65em; margin:20px 0 10px; font-size:1.18rem; font-weight:800; }
+    .next { display:none; background:var(--blue); color:#fff; box-shadow:0 3px 0 #24589f; }
+    .hint { margin:18px 0 0; color:#516079; font-size:.95rem; }
+    @media (max-width:470px) { body { padding:12px; } .game { border-radius:20px; } .answers { grid-template-columns:repeat(4,1fr); } .badges { grid-template-columns:repeat(2, minmax(0, 1fr)); } }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>ðŸ•µï¸ Detectives del pentagrama</h1>
+    <p class="subtitle">Observa la posiciÃ³n de la nota y descubre cÃ³mo se llama.</p>
+    <section class="game" aria-label="Juego para identificar notas en el pentagrama">
+      <div class="top"><span>Aciertos: <span id="score">0</span> Â· Racha: <span id="streak">0</span> Â· Ronda <span id="round">1</span></span><div class="clefs" aria-label="Elegir clave"><button type="button" class="clef active" data-clef="treble" aria-pressed="true">ð„ž Clave de sol</button><button type="button" class="clef" data-clef="alto" aria-pressed="false">ð„¡ Clave de do</button><button type="button" class="clef" data-clef="bass" aria-pressed="false">ð„¢ Clave de fa</button></div></div>
+      <div class="profiles" aria-label="Elegir personaje">
+        <p>Â¿QuiÃ©n juega?</p>
+        <div class="profile-list">
+          <button type="button" class="profile active" data-profile="luna" aria-pressed="true">ðŸŒ™ Luna</button>
+          <button type="button" class="profile" data-profile="leo" aria-pressed="false">ðŸ¦ Leo</button>
+          <button type="button" class="profile" data-profile="mia" aria-pressed="false">ðŸŒ¸ Mia</button>
+          <button type="button" class="profile" data-profile="nico" aria-pressed="false">ðŸš€ Nico</button>
+        </div>
+      </div>
+      <div class="staff-wrap"><svg id="staff" viewBox="0 0 650 220" role="img" aria-label="Pentagrama con una nota musical"><title>Identifica la nota del pentagrama</title></svg></div>
+      <h2>Â¿QuÃ© nota es?</h2>
+      <div class="answers" id="answers"></div>
+      <p id="message" aria-live="polite">Elige el nombre de la nota.</p>
+      <button class="next" id="next" type="button">Siguiente nota â†’</button>
+      <div class="badges" aria-label="Insignias musicales">
+        <div class="badge" data-goal="3"><span class="instrument">ðŸ¥</span>Tambor Â· racha 3</div>
+        <div class="badge" data-goal="6"><span class="instrument">ðŸŽ¸</span>Guitarra Â· racha 6</div>
+        <div class="badge" data-goal="10"><span class="instrument">ðŸŽº</span>Trompeta Â· racha 10</div>
+        <div class="badge" data-goal="20"><span class="instrument">ðŸŽ»</span>ViolÃ­n Â· racha 20</div>
+        <div class="badge" data-goal="50"><span class="instrument">ðŸŽ¹</span>Piano Â· racha 50</div>
+        <div class="badge" data-goal="100"><span class="instrument">ðŸŽ¼</span>Arpa Â· racha 100</div>
+        <div class="badge silver" data-goal="200"><span class="instrument">ð„ž</span>Sol plata Â· 200</div>
+        <div class="badge gold" data-goal="500"><span class="instrument">ð„¡</span>Do oro Â· 500</div>
+      </div>
+      <p class="hint">Puedes cambiar de clave cuando quieras. Â¡FÃ­jate en las lÃ­neas y los espacios!</p>
+    </section>
+  </main>
+  <script>
+    const palettes = {
+      treble: { label:'clave de sol', symbol:'ð„ž', notes:[['DO',170],['RE',160],['MI',150],['FA',140],['SOL',130],['LA',120],['SI',110],['DO',100],['RE',90],['MI',80],['FA',70],['SOL',60]] },
+      alto: { label:'clave de do', symbol:'ð„¡', notes:[['FA',150],['SOL',140],['LA',130],['SI',120],['DO',110],['RE',100],['MI',90],['FA',80],['SOL',70],['LA',60],['SI',50]] },
+      bass: { label:'clave de fa', symbol:'ð„¢', notes:[['SOL',150],['LA',140],['SI',130],['DO',120],['RE',110],['MI',100],['FA',90],['SOL',80],['LA',70],['SI',60]] }
+    };
+    const names = ['DO','RE','MI','FA','SOL','LA','SI'];
+    const staff = document.querySelector('#staff'), answers = document.querySelector('#answers');
+    const scoreEl = document.querySelector('#score'), streakEl = document.querySelector('#streak'), roundEl = document.querySelector('#round'), message = document.querySelector('#message'), next = document.querySelector('#next');
+    const badges = [...document.querySelectorAll('.badge')];
+    const profileButtons = [...document.querySelectorAll('.profile')];
+    const emptyClefs = () => ({
+      treble: { score:0, streak:0, badges:[] }, alto: { score:0, streak:0, badges:[] }, bass: { score:0, streak:0, badges:[] }
+    });
+    const defaultProfiles = {
+      luna: { name:'Luna', clefs:emptyClefs() }, leo: { name:'Leo', clefs:emptyClefs() },
+      mia: { name:'Mia', clefs:emptyClefs() }, nico: { name:'Nico', clefs:emptyClefs() }
+    };
+    function cleanClefProgress(progress) {
+      return { score:Number(progress?.score) || 0, streak:Number(progress?.streak) || 0, badges:Array.isArray(progress?.badges) ? progress.badges.map(Number) : [] };
+    }
+    function loadProgress() {
+      try {
+        const saved = JSON.parse(localStorage.getItem('detectives-pentagrama-progress'));
+        if (!saved || !saved.profiles) return { activeProfile:'luna', profiles:defaultProfiles };
+        const profiles = {};
+        Object.keys(defaultProfiles).forEach(id => {
+          const loaded = saved.profiles[id] || {};
+          const previousProgress = { score:loaded.score, streak:loaded.streak, badges:loaded.badges };
+          profiles[id] = {
+            ...defaultProfiles[id],
+            clefs: {
+              treble:cleanClefProgress(loaded.clefs?.treble || previousProgress),
+              alto:cleanClefProgress(loaded.clefs?.alto),
+              bass:cleanClefProgress(loaded.clefs?.bass)
+            }
+          };
+        });
+        return { activeProfile:profiles[saved.activeProfile] ? saved.activeProfile : 'luna', profiles };
+      } catch { return { activeProfile:'luna', profiles:defaultProfiles }; }
+    }
+    const savedState = loadProgress();
+    let profiles = savedState.profiles, activeProfile = savedState.activeProfile;
+    let clef = 'treble', target, score = 0, streak = 0, round = 1, locked = false, audio;
+    let unlockedBadges = new Set();
+    function saveProgress() {
+      profiles[activeProfile].clefs[clef] = { score, streak, badges:[...unlockedBadges] };
+      localStorage.setItem('detectives-pentagrama-progress', JSON.stringify({ version:2, activeProfile, profiles }));
+    }
+    function loadClefProgress() {
+      const progress = profiles[activeProfile].clefs[clef];
+      score = progress.score; streak = progress.streak; unlockedBadges = new Set(progress.badges);
+      scoreEl.textContent = score; streakEl.textContent = streak; updateBadges();
+    }
+    function loadProfile(id) {
+      saveProgress();
+      activeProfile = id;
+      profileButtons.forEach(button => { const selected = button.dataset.profile === id; button.classList.toggle('active', selected); button.setAttribute('aria-pressed', selected); });
+      loadClefProgress(); newRound();
+    }
+    function updateBadges() {
+      let earned = '';
+      badges.forEach(badge => {
+        const goal = Number(badge.dataset.goal);
+        if (streak >= goal && !unlockedBadges.has(goal)) { unlockedBadges.add(goal); earned = badge.textContent.trim().split(' Â· ')[0]; }
+        badge.classList.toggle('unlocked', unlockedBadges.has(goal));
+      });
+      saveProgress();
+      return earned;
+    }
+    function playTarget() {
+      const y = target[1];
+      const pitchStart = { treble:{ midi:60, y:170 }, alto:{ midi:53, y:150 }, bass:{ midi:43, y:150 } }[clef];
+      const scaleSteps = [0, 2, 4, 5, 7, 9, 11];
+      const position = (pitchStart.y - y) / 10;
+      const midi = pitchStart.midi + (12 * Math.floor(position / 7)) + scaleSteps[position % 7];
+      const hz = 440 * Math.pow(2, (midi - 69) / 12);
+      audio ??= new (window.AudioContext || window.webkitAudioContext)();
+      const oscillator = audio.createOscillator(), gain = audio.createGain();
+      oscillator.type = 'sine'; oscillator.frequency.value = hz;
+      gain.gain.setValueAtTime(.18, audio.currentTime);
+      gain.gain.exponentialRampToValueAtTime(.001, audio.currentTime + .96);
+      oscillator.connect(gain).connect(audio.destination);
+      oscillator.start(); oscillator.stop(audio.currentTime + 1);
+    }
+    function drawStaff() {
+      const lines = [70,90,110,130,150].map(y => `<line class="staff-line" x1="95" y1="${y}" x2="610" y2="${y}"/>`).join('');
+      const y = target[1];
+      const ledgerYs = [];
+      for (let ledgerY = 50; y <= ledgerY; ledgerY -= 20) ledgerYs.push(ledgerY);
+      for (let ledgerY = 170; y >= ledgerY; ledgerY += 20) ledgerYs.push(ledgerY);
+      const ledger = ledgerYs.map(ledgerY => `<line class="ledger" x1="282" y1="${ledgerY}" x2="356" y2="${ledgerY}"/>`).join('');
+      const stemUp = y > 110;
+      const stem = stemUp ? `<line class="stem" x1="335" y1="${y}" x2="335" y2="${y-55}"/>` : `<line class="stem" x1="305" y1="${y}" x2="305" y2="${y+55}"/>`;
+      staff.innerHTML = `<title>Una nota en ${palettes[clef].label}</title>${lines}<text class="clef-symbol" x="108" y="145" font-size="105">${palettes[clef].symbol}</text>${ledger}${stem}<ellipse class="note" cx="320" cy="${y}" rx="16" ry="10" transform="rotate(-18 320 ${y})"/>`;
+    }
+    function chooseTarget() { const all = palettes[clef].notes; target = all[Math.floor(Math.random()*all.length)]; }
+    function newRound() {
+      chooseTarget(); locked = false; drawStaff(); message.textContent = 'Elige el nombre de la nota.'; next.style.display = 'none';
+      answers.querySelectorAll('button').forEach(b => b.className = 'answer'); roundEl.textContent = round;
+    }
+    names.forEach(name => {
+      const btn = document.createElement('button'); btn.type = 'button'; btn.className = 'answer'; btn.textContent = name; btn.setAttribute('aria-label', `Responder ${name}`);
+      btn.addEventListener('click', () => {
+        if (locked) return; locked = true;
+        if (name === target[0]) {
+          score++; streak++; scoreEl.textContent = score; streakEl.textContent = streak; btn.classList.add('correct');
+          const earned = updateBadges();
+          message.textContent = earned ? `Â¡Insignia desbloqueada: ${earned}! ðŸŒŸ` : `Â¡Exacto! Racha de ${streak} ðŸŒŸ`; playTarget();
+          setTimeout(() => { round++; newRound(); }, 500);
+        }
+        else {
+          btn.classList.add('wrong'); streak = 0; streakEl.textContent = streak; updateBadges(); message.textContent = `Casiâ€¦ la respuesta era ${target[0]}.`;
+          setTimeout(() => { round++; newRound(); }, 2000);
+        }
+      }); answers.append(btn);
+    });
+    document.querySelectorAll('.clef').forEach(btn => btn.addEventListener('click', () => {
+      saveProgress(); clef = btn.dataset.clef;
+      document.querySelectorAll('.clef').forEach(b => { const active=b===btn; b.classList.toggle('active',active); b.setAttribute('aria-pressed',active); });
+      loadClefProgress(); newRound();
+    }));
+    profileButtons.forEach(button => button.addEventListener('click', () => loadProfile(button.dataset.profile)));
+    next.addEventListener('click', () => { round++; newRound(); });
+    loadProfile(activeProfile);
+  </script>
+</body>
+</html>
+
+
