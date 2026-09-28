@@ -12,19 +12,26 @@
     h1 { margin:0; font-size:clamp(2rem,7vw,3.7rem); letter-spacing:-.06em; }
     .subtitle { margin:8px 0 22px; font-size:1.15rem; }
     .game { background:#fff; border-radius:28px; padding:clamp(20px,5vw,38px); box-shadow:0 18px 50px #406aa633; }
-    .top { display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap; margin-bottom:20px; font-weight:800; }
-    .profiles { margin:0 0 18px; }
-    .profiles p { margin:0 0 8px; font-weight:800; }
+    .top { display:flex; justify-content:space-between; align-items:center; gap:12px; margin-bottom:20px; font-weight:800; }
+    .settings-toggle { padding:10px 14px; border-radius:999px; background:#eaf1fc; color:var(--ink); }
+    .settings-toggle[aria-expanded="true"] { background:var(--blue); color:#fff; }
+    .settings-backdrop { position:fixed; inset:0; background:#1a274855; opacity:0; pointer-events:none; transition:opacity .2s; z-index:10; }
+    .settings-backdrop.open { opacity:1; pointer-events:auto; }
+    .settings-panel { position:fixed; top:0; left:0; width:min(340px,88vw); height:100vh; padding:24px; overflow-y:auto; background:#fff; box-shadow:12px 0 34px #1d31503d; transform:translateX(-105%); transition:transform .25s ease; z-index:11; text-align:left; }
+    .settings-panel.open { transform:translateX(0); }
+    .settings-heading { display:flex; justify-content:space-between; align-items:center; gap:12px; margin:0 0 24px; }
+    .settings-heading h2 { margin:0; font-size:1.35rem; }
+    .close-settings { width:40px; height:40px; border-radius:50%; background:#edf1f7; color:var(--ink); font-size:1.35rem; }
+    .settings-group { margin:0 0 26px; }
+    .settings-group h3 { margin:0 0 10px; font-size:1rem; }
     .profile-list { display:flex; justify-content:center; gap:8px; flex-wrap:wrap; }
     .profile { min-width:92px; padding:8px 11px; border-radius:14px; background:#edf1f7; color:var(--ink); }
     .profile.active { background:var(--blue); color:white; }
-    .badges { display:grid; grid-template-columns:repeat(4, minmax(0, 1fr)); gap:10px; margin:18px 0 4px; }
+    .badges { display:grid; grid-template-columns:repeat(3, minmax(0, 1fr)); gap:10px; margin:18px 0 4px; }
     .badge { min-width:0; padding:9px 6px; border-radius:14px; background:#edf1f7; color:#67728a; font-size:.85rem; font-weight:800; opacity:.55; transition:opacity .2s, transform .2s, background .2s; }
     .badge.unlocked { background:#fff1ae; color:var(--ink); opacity:1; transform:translateY(-2px); }
-    .badge.silver.unlocked { background:#e7edf6; }
-    .badge.gold.unlocked { background:#ffe084; }
     .badge .instrument { display:block; font-size:1.45rem; line-height:1.1; }
-    .clefs { display:flex; gap:8px; }
+    .clefs { display:grid; gap:8px; }
     button { border:0; font:inherit; font-weight:800; cursor:pointer; touch-action:manipulation; }
     .clef, .next { padding:10px 14px; border-radius:999px; background:#eaf1fc; color:var(--ink); }
     .clef.active { background:var(--blue); color:white; }
@@ -35,7 +42,8 @@
     .note { fill:var(--blue); }
     .stem { stroke:var(--blue); stroke-width:5; stroke-linecap:round; }
     .clef-symbol { fill:var(--ink); font-family:"Noto Music","Segoe UI Symbol",serif; }
-    h2 { margin:22px 0 14px; font-size:1.3rem; }
+    h2 { min-height:1.5em; margin:22px 0 14px; font-size:1.3rem; }
+    h2.correction { color:#a76500; }
     .answers { display:grid; grid-template-columns:repeat(7,1fr); gap:8px; }
     .answer { min-height:58px; border-radius:14px; background:#fff6cb; color:var(--ink); box-shadow:0 3px 0 #d7b33b; font-size:1.1rem; }
     .answer:active { transform:translateY(3px); box-shadow:none; }
@@ -44,7 +52,7 @@
     #message { min-height:1.65em; margin:20px 0 10px; font-size:1.18rem; font-weight:800; }
     .next { display:none; background:var(--blue); color:#fff; box-shadow:0 3px 0 #24589f; }
     .hint { margin:18px 0 0; color:#516079; font-size:.95rem; }
-    @media (max-width:470px) { body { padding:12px; } .game { border-radius:20px; } .answers { grid-template-columns:repeat(4,1fr); } .badges { grid-template-columns:repeat(2, minmax(0, 1fr)); } }
+    @media (max-width:470px) { body { padding:12px; } .game { border-radius:20px; } .answers { grid-template-columns:repeat(4,1fr); } .badges { grid-template-columns:repeat(3, minmax(0, 1fr)); } }
   </style>
 </head>
 <body>
@@ -52,51 +60,61 @@
     <h1>🕵️ Detectives del pentagrama</h1>
     <p class="subtitle">Observa la posición de la nota y descubre cómo se llama.</p>
     <section class="game" aria-label="Juego para identificar notas en el pentagrama">
-      <div class="top"><span>Aciertos: <span id="score">0</span> · Racha: <span id="streak">0</span> · Ronda <span id="round">1</span></span><div class="clefs" aria-label="Elegir clave"><button type="button" class="clef active" data-clef="treble" aria-pressed="true">𝄞 Clave de sol</button><button type="button" class="clef" data-clef="alto" aria-pressed="false">𝄡 Clave de do</button><button type="button" class="clef" data-clef="bass" aria-pressed="false">𝄢 Clave de fa</button></div></div>
-      <div class="profiles" aria-label="Elegir personaje">
-        <p>¿Quién juega?</p>
-        <div class="profile-list">
+      <div class="top"><span>Aciertos: <span id="score">0</span> · Racha: <span id="streak">0</span></span><button type="button" class="settings-toggle" id="settings-toggle" aria-expanded="false" aria-controls="settings-panel" aria-label="Cambiar personaje y clave">Luna · 𝄞</button></div>
+      <div class="settings-backdrop" id="settings-backdrop"></div>
+      <aside class="settings-panel" id="settings-panel" aria-label="Ajustes del juego" aria-hidden="true">
+        <div class="settings-heading"><h2>Ajustes</h2><button type="button" class="close-settings" id="close-settings" aria-label="Cerrar ajustes">×</button></div>
+        <section class="settings-group" aria-label="Elegir personaje">
+          <h3>¿Quién juega?</h3>
+          <div class="profile-list">
           <button type="button" class="profile active" data-profile="luna" aria-pressed="true">🌙 Luna</button>
           <button type="button" class="profile" data-profile="leo" aria-pressed="false">🦁 Leo</button>
           <button type="button" class="profile" data-profile="mia" aria-pressed="false">🌸 Mia</button>
           <button type="button" class="profile" data-profile="nico" aria-pressed="false">🚀 Nico</button>
-        </div>
-      </div>
+          </div>
+        </section>
+        <section class="settings-group" aria-label="Elegir clave"><h3>Clave musical</h3><div class="clefs"><button type="button" class="clef active" data-clef="treble" aria-pressed="true">𝄞 Clave de sol</button><button type="button" class="clef" data-clef="alto" aria-pressed="false">𝄡 Clave de do</button><button type="button" class="clef" data-clef="bass" aria-pressed="false">𝄢 Clave de fa</button></div></section>
+      </aside>
       <div class="staff-wrap"><svg id="staff" viewBox="0 0 650 220" role="img" aria-label="Pentagrama con una nota musical"><title>Identifica la nota del pentagrama</title></svg></div>
-      <h2>¿Qué nota es?</h2>
+      <h2 id="question" aria-live="polite">¿Qué nota es?</h2>
       <div class="answers" id="answers"></div>
       <p id="message" aria-live="polite">Elige el nombre de la nota.</p>
       <button class="next" id="next" type="button">Siguiente nota →</button>
       <div class="badges" aria-label="Insignias musicales">
-        <div class="badge" data-goal="3"><span class="instrument">🥁</span>Tambor · racha 3</div>
-        <div class="badge" data-goal="6"><span class="instrument">🎸</span>Guitarra · racha 6</div>
         <div class="badge" data-goal="10"><span class="instrument">🎺</span>Trompeta · racha 10</div>
-        <div class="badge" data-goal="20"><span class="instrument">🎻</span>Violín · racha 20</div>
         <div class="badge" data-goal="50"><span class="instrument">🎹</span>Piano · racha 50</div>
-        <div class="badge" data-goal="100"><span class="instrument">🎼</span>Arpa · racha 100</div>
-        <div class="badge silver" data-goal="200"><span class="instrument">𝄞</span>Sol plata · 200</div>
-        <div class="badge gold" data-goal="500"><span class="instrument">𝄡</span>Do oro · 500</div>
+        <div class="badge" data-goal="100"><span class="instrument">🥁</span>Tambor · racha 100</div>
+        <div class="badge" data-goal="200"><span class="instrument">🎸</span>Guitarra · racha 200</div>
+        <div class="badge" data-goal="500"><span class="instrument">🎻</span>Violín · racha 500</div>
       </div>
       <p class="hint">Puedes cambiar de clave cuando quieras. ¡Fíjate en las líneas y los espacios!</p>
     </section>
   </main>
   <script>
     const palettes = {
-      treble: { label:'clave de sol', symbol:'𝄞', notes:[['DO',170],['RE',160],['MI',150],['FA',140],['SOL',130],['LA',120],['SI',110],['DO',100],['RE',90],['MI',80],['FA',70],['SOL',60]] },
-      alto: { label:'clave de do', symbol:'𝄡', notes:[['FA',150],['SOL',140],['LA',130],['SI',120],['DO',110],['RE',100],['MI',90],['FA',80],['SOL',70],['LA',60],['SI',50]] },
-      bass: { label:'clave de fa', symbol:'𝄢', notes:[['SOL',150],['LA',140],['SI',130],['DO',120],['RE',110],['MI',100],['FA',90],['SOL',80],['LA',70],['SI',60]] }
+      treble: { label:'clave de sol', symbol:'𝄞', notes:[['LA',190],['SI',180],['DO',170],['RE',160],['MI',150],['FA',140],['SOL',130],['LA',120],['SI',110],['DO',100],['RE',90],['MI',80],['FA',70],['SOL',60],['LA',50],['SI',40],['DO',30]] },
+      alto: { label:'clave de do', symbol:'𝄡', notes:[['SI',190],['DO',180],['RE',170],['MI',160],['FA',150],['SOL',140],['LA',130],['SI',120],['DO',110],['RE',100],['MI',90],['FA',80],['SOL',70],['LA',60],['SI',50],['DO',40],['RE',30]] },
+      bass: { label:'clave de fa', symbol:'𝄢', notes:[['DO',190],['RE',180],['MI',170],['FA',160],['SOL',150],['LA',140],['SI',130],['DO',120],['RE',110],['MI',100],['FA',90],['SOL',80],['LA',70],['SI',60],['DO',50],['RE',40],['MI',30]] }
     };
     const names = ['DO','RE','MI','FA','SOL','LA','SI'];
     const staff = document.querySelector('#staff'), answers = document.querySelector('#answers');
-    const scoreEl = document.querySelector('#score'), streakEl = document.querySelector('#streak'), roundEl = document.querySelector('#round'), message = document.querySelector('#message'), next = document.querySelector('#next');
+    const scoreEl = document.querySelector('#score'), streakEl = document.querySelector('#streak'), message = document.querySelector('#message'), next = document.querySelector('#next');
+    const question = document.querySelector('#question');
     const badges = [...document.querySelectorAll('.badge')];
     const profileButtons = [...document.querySelectorAll('.profile')];
+    const settingsToggle = document.querySelector('#settings-toggle'), settingsPanel = document.querySelector('#settings-panel'), settingsBackdrop = document.querySelector('#settings-backdrop');
+    function updateSettingsLabel() { settingsToggle.textContent = `${profiles[activeProfile].name} · ${palettes[clef].symbol}`; }
+    function setSettingsOpen(open) {
+      settingsPanel.classList.toggle('open', open); settingsBackdrop.classList.toggle('open', open);
+      settingsPanel.setAttribute('aria-hidden', !open); settingsToggle.setAttribute('aria-expanded', open);
+      if (open) document.querySelector('#close-settings').focus(); else settingsToggle.focus();
+    }
     const emptyClefs = () => ({
       treble: { score:0, streak:0, badges:[] }, alto: { score:0, streak:0, badges:[] }, bass: { score:0, streak:0, badges:[] }
     });
     const defaultProfiles = {
-      luna: { name:'Luna', clefs:emptyClefs() }, leo: { name:'Leo', clefs:emptyClefs() },
-      mia: { name:'Mia', clefs:emptyClefs() }, nico: { name:'Nico', clefs:emptyClefs() }
+      luna: { name:'Luna', selectedClef:'treble', clefs:emptyClefs() }, leo: { name:'Leo', selectedClef:'treble', clefs:emptyClefs() },
+      mia: { name:'Mia', selectedClef:'treble', clefs:emptyClefs() }, nico: { name:'Nico', selectedClef:'treble', clefs:emptyClefs() }
     };
     function cleanClefProgress(progress) {
       return { score:Number(progress?.score) || 0, streak:Number(progress?.streak) || 0, badges:Array.isArray(progress?.badges) ? progress.badges.map(Number) : [] };
@@ -111,6 +129,7 @@
           const previousProgress = { score:loaded.score, streak:loaded.streak, badges:loaded.badges };
           profiles[id] = {
             ...defaultProfiles[id],
+            selectedClef:['treble', 'alto', 'bass'].includes(loaded.selectedClef) ? loaded.selectedClef : 'treble',
             clefs: {
               treble:cleanClefProgress(loaded.clefs?.treble || previousProgress),
               alto:cleanClefProgress(loaded.clefs?.alto),
@@ -123,11 +142,12 @@
     }
     const savedState = loadProgress();
     let profiles = savedState.profiles, activeProfile = savedState.activeProfile;
-    let clef = 'treble', target, score = 0, streak = 0, round = 1, locked = false, audio;
+    let clef = 'treble', target, score = 0, streak = 0, locked = false, failedAttempt = false, correctionTimer, advanceTimer, audio;
     let unlockedBadges = new Set();
     function saveProgress() {
+      profiles[activeProfile].selectedClef = clef;
       profiles[activeProfile].clefs[clef] = { score, streak, badges:[...unlockedBadges] };
-      localStorage.setItem('detectives-pentagrama-progress', JSON.stringify({ version:2, activeProfile, profiles }));
+      localStorage.setItem('detectives-pentagrama-progress', JSON.stringify({ version:3, activeProfile, profiles }));
     }
     function loadClefProgress() {
       const progress = profiles[activeProfile].clefs[clef];
@@ -135,10 +155,12 @@
       scoreEl.textContent = score; streakEl.textContent = streak; updateBadges();
     }
     function loadProfile(id) {
-      saveProgress();
+      if (id !== activeProfile) saveProgress();
       activeProfile = id;
+      clef = profiles[id].selectedClef;
       profileButtons.forEach(button => { const selected = button.dataset.profile === id; button.classList.toggle('active', selected); button.setAttribute('aria-pressed', selected); });
-      loadClefProgress(); newRound();
+      document.querySelectorAll('.clef').forEach(button => { const selected = button.dataset.clef === clef; button.classList.toggle('active', selected); button.setAttribute('aria-pressed', selected); });
+      updateSettingsLabel(); loadClefProgress(); newRound();
     }
     function updateBadges() {
       let earned = '';
@@ -151,19 +173,21 @@
       return earned;
     }
     function playTarget() {
-      const y = target[1];
-      const pitchStart = { treble:{ midi:60, y:170 }, alto:{ midi:53, y:150 }, bass:{ midi:43, y:150 } }[clef];
-      const scaleSteps = [0, 2, 4, 5, 7, 9, 11];
-      const position = (pitchStart.y - y) / 10;
-      const midi = pitchStart.midi + (12 * Math.floor(position / 7)) + scaleSteps[position % 7];
-      const hz = 440 * Math.pow(2, (midi - 69) / 12);
-      audio ??= new (window.AudioContext || window.webkitAudioContext)();
-      const oscillator = audio.createOscillator(), gain = audio.createGain();
-      oscillator.type = 'sine'; oscillator.frequency.value = hz;
-      gain.gain.setValueAtTime(.18, audio.currentTime);
-      gain.gain.exponentialRampToValueAtTime(.001, audio.currentTime + .96);
-      oscillator.connect(gain).connect(audio.destination);
-      oscillator.start(); oscillator.stop(audio.currentTime + 1);
+      try {
+        const y = target[1];
+        const pitchStart = { treble:{ midi:60, y:170 }, alto:{ midi:53, y:150 }, bass:{ midi:43, y:150 } }[clef];
+        const scaleSteps = [0, 2, 4, 5, 7, 9, 11];
+        const position = (pitchStart.y - y) / 10;
+        const midi = pitchStart.midi + (12 * Math.floor(position / 7)) + scaleSteps[position % 7];
+        const hz = 440 * Math.pow(2, (midi - 69) / 12);
+        audio ??= new (window.AudioContext || window.webkitAudioContext)();
+        const oscillator = audio.createOscillator(), gain = audio.createGain();
+        oscillator.type = 'sine'; oscillator.frequency.value = hz;
+        gain.gain.setValueAtTime(.18, audio.currentTime);
+        gain.gain.exponentialRampToValueAtTime(.001, audio.currentTime + .96);
+        oscillator.connect(gain).connect(audio.destination);
+        oscillator.start(); oscillator.stop(audio.currentTime + 1);
+      } catch { /* El juego continúa aunque el dispositivo no permita reproducir audio. */ }
     }
     function drawStaff() {
       const lines = [70,90,110,130,150].map(y => `<line class="staff-line" x1="95" y1="${y}" x2="610" y2="${y}"/>`).join('');
@@ -178,32 +202,40 @@
     }
     function chooseTarget() { const all = palettes[clef].notes; target = all[Math.floor(Math.random()*all.length)]; }
     function newRound() {
-      chooseTarget(); locked = false; drawStaff(); message.textContent = 'Elige el nombre de la nota.'; next.style.display = 'none';
-      answers.querySelectorAll('button').forEach(b => b.className = 'answer'); roundEl.textContent = round;
+      clearTimeout(correctionTimer); clearTimeout(advanceTimer); chooseTarget(); locked = false; failedAttempt = false; drawStaff(); message.textContent = 'Elige el nombre de la nota.'; next.style.display = 'none'; question.textContent = '¿Qué nota es?'; question.classList.remove('correction');
+      answers.querySelectorAll('button').forEach(b => b.className = 'answer');
     }
     names.forEach(name => {
       const btn = document.createElement('button'); btn.type = 'button'; btn.className = 'answer'; btn.textContent = name; btn.setAttribute('aria-label', `Responder ${name}`);
       btn.addEventListener('click', () => {
         if (locked) return; locked = true;
         if (name === target[0]) {
+          clearTimeout(correctionTimer); question.textContent = '¿Qué nota es?'; question.classList.remove('correction');
           score++; streak++; scoreEl.textContent = score; streakEl.textContent = streak; btn.classList.add('correct');
           const earned = updateBadges();
-          message.textContent = earned ? `¡Insignia desbloqueada: ${earned}! 🌟` : `¡Exacto! Racha de ${streak} 🌟`; playTarget();
-          setTimeout(() => { round++; newRound(); }, 500);
+          message.textContent = earned ? `¡Insignia desbloqueada: ${earned}! 🌟` : failedAttempt ? '¡Correcto! Seguimos con otra nota 🌟' : `¡Exacto! Racha de ${streak} 🌟`;
+          advanceTimer = setTimeout(newRound, 500); playTarget();
         }
         else {
-          btn.classList.add('wrong'); streak = 0; streakEl.textContent = streak; updateBadges(); message.textContent = `Casi… la respuesta era ${target[0]}.`;
-          setTimeout(() => { round++; newRound(); }, 2000);
+          btn.classList.add('wrong');
+          if (!failedAttempt) { streak = 0; streakEl.textContent = streak; updateBadges(); }
+          failedAttempt = true; locked = false; clearTimeout(correctionTimer); question.textContent = `La nota correcta es: ${target[0]}`; question.classList.add('correction');
+          correctionTimer = setTimeout(() => { question.textContent = '¿Qué nota es?'; question.classList.remove('correction'); }, 2000);
+          message.textContent = 'Mira la corrección y elige la nota correcta para continuar.';
         }
       }); answers.append(btn);
     });
     document.querySelectorAll('.clef').forEach(btn => btn.addEventListener('click', () => {
       saveProgress(); clef = btn.dataset.clef;
       document.querySelectorAll('.clef').forEach(b => { const active=b===btn; b.classList.toggle('active',active); b.setAttribute('aria-pressed',active); });
-      loadClefProgress(); newRound();
+      updateSettingsLabel(); loadClefProgress(); newRound(); setSettingsOpen(false);
     }));
-    profileButtons.forEach(button => button.addEventListener('click', () => loadProfile(button.dataset.profile)));
-    next.addEventListener('click', () => { round++; newRound(); });
+    profileButtons.forEach(button => button.addEventListener('click', () => { loadProfile(button.dataset.profile); setSettingsOpen(false); }));
+    settingsToggle.addEventListener('click', () => setSettingsOpen(true));
+    document.querySelector('#close-settings').addEventListener('click', () => setSettingsOpen(false));
+    settingsBackdrop.addEventListener('click', () => setSettingsOpen(false));
+    document.addEventListener('keydown', event => { if (event.key === 'Escape' && settingsPanel.classList.contains('open')) setSettingsOpen(false); });
+    next.addEventListener('click', newRound);
     loadProfile(activeProfile);
   </script>
 </body>
