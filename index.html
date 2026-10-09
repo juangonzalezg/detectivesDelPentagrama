@@ -52,6 +52,8 @@
     #message { min-height:1.65em; margin:20px 0 10px; font-size:1.18rem; font-weight:800; }
     .next { display:none; background:var(--blue); color:#fff; box-shadow:0 3px 0 #24589f; }
     .hint { margin:18px 0 0; color:#516079; font-size:.95rem; }
+    .credits { margin:10px 0 0; color:#68758a; font-size:.78rem; }
+    .credits a { color:inherit; }
     @media (max-width:470px) { body { padding:12px; } .game { border-radius:20px; } .answers { grid-template-columns:repeat(4,1fr); } .badges { grid-template-columns:repeat(3, minmax(0, 1fr)); } }
   </style>
 </head>
@@ -88,6 +90,7 @@
         <div class="badge" data-goal="500"><span class="instrument">🎻</span>Violín · racha 500</div>
       </div>
       <p class="hint">Puedes cambiar de clave cuando quieras. ¡Fíjate en las líneas y los espacios!</p>
+      <p class="credits">Sonidos: <a href="https://github.com/sgossner/SalamanderGrandPiano" target="_blank" rel="noopener">Salamander Grand Piano V3</a>, Alexander Holm — <a href="https://creativecommons.org/licenses/by/3.0/" target="_blank" rel="noopener">CC BY 3.0</a>.</p>
     </section>
   </main>
   <script>
@@ -142,7 +145,12 @@
     }
     const savedState = loadProgress();
     let profiles = savedState.profiles, activeProfile = savedState.activeProfile;
-    let clef = 'treble', target, score = 0, streak = 0, locked = false, failedAttempt = false, correctionTimer, advanceTimer, audio;
+    const pianoSamples = [
+      ['C2',36], ['Ds2',39], ['Fs2',42], ['A2',45], ['C3',48], ['Ds3',51], ['Fs3',54], ['A3',57],
+      ['C4',60], ['Ds4',63], ['Fs4',66], ['A4',69], ['C5',72], ['Ds5',75], ['Fs5',78], ['A5',81], ['C6',84]
+    ].map(([name, midi]) => ({ name, midi, audio:new Audio(`audio/piano/${name}.mp3`) }));
+    pianoSamples.forEach(sample => { sample.audio.preload = 'auto'; });
+    let clef = 'treble', target, score = 0, streak = 0, locked = false, failedAttempt = false, correctionTimer, advanceTimer;
     let unlockedBadges = new Set();
     function saveProgress() {
       profiles[activeProfile].selectedClef = clef;
@@ -177,16 +185,13 @@
         const y = target[1];
         const pitchStart = { treble:{ midi:60, y:170 }, alto:{ midi:53, y:150 }, bass:{ midi:43, y:150 } }[clef];
         const scaleSteps = [0, 2, 4, 5, 7, 9, 11];
-        const position = (pitchStart.y - y) / 10;
-        const midi = pitchStart.midi + (12 * Math.floor(position / 7)) + scaleSteps[position % 7];
-        const hz = 440 * Math.pow(2, (midi - 69) / 12);
-        audio ??= new (window.AudioContext || window.webkitAudioContext)();
-        const oscillator = audio.createOscillator(), gain = audio.createGain();
-        oscillator.type = 'sine'; oscillator.frequency.value = hz;
-        gain.gain.setValueAtTime(.18, audio.currentTime);
-        gain.gain.exponentialRampToValueAtTime(.001, audio.currentTime + .96);
-        oscillator.connect(gain).connect(audio.destination);
-        oscillator.start(); oscillator.stop(audio.currentTime + 1);
+        const position = Math.round((pitchStart.y - y) / 10);
+        const octave = Math.floor(position / 7), degree = ((position % 7) + 7) % 7;
+        const midi = pitchStart.midi + (12 * octave) + scaleSteps[degree];
+        const sample = pianoSamples.reduce((closest, candidate) => Math.abs(candidate.midi - midi) < Math.abs(closest.midi - midi) ? candidate : closest);
+        const sound = sample.audio.cloneNode();
+        sound.playbackRate = Math.pow(2, (midi - sample.midi) / 12); sound.volume = .62;
+        sound.play().catch(() => {});
       } catch { /* El juego continúa aunque el dispositivo no permita reproducir audio. */ }
     }
     function drawStaff() {
