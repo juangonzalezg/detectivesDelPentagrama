@@ -183,13 +183,18 @@
     function playTarget() {
       try {
         const y = target[1];
-        const pitchStart = { treble:{ midi:60, y:170 }, alto:{ midi:53, y:150 }, bass:{ midi:43, y:150 } }[clef];
+        const pitchStart = { treble:{ midi:60, y:170, degree:0 }, alto:{ midi:53, y:150, degree:3 }, bass:{ midi:43, y:150, degree:4 } }[clef];
         const scaleSteps = [0, 2, 4, 5, 7, 9, 11];
         const position = Math.round((pitchStart.y - y) / 10);
-        const octave = Math.floor(position / 7), degree = ((position % 7) + 7) % 7;
-        const midi = pitchStart.midi + (12 * octave) + scaleSteps[degree];
+        const diatonicDegree = pitchStart.degree + position;
+        const octave = Math.floor(diatonicDegree / 7), degree = ((diatonicDegree % 7) + 7) % 7;
+        const baseC = pitchStart.midi - scaleSteps[pitchStart.degree];
+        const midi = baseC + (12 * octave) + scaleSteps[degree];
         const sample = pianoSamples.reduce((closest, candidate) => Math.abs(candidate.midi - midi) < Math.abs(closest.midi - midi) ? candidate : closest);
         const sound = sample.audio.cloneNode();
+        sound.preservesPitch = false;
+        if ('webkitPreservesPitch' in sound) sound.webkitPreservesPitch = false;
+        if ('mozPreservesPitch' in sound) sound.mozPreservesPitch = false;
         sound.playbackRate = Math.pow(2, (midi - sample.midi) / 12); sound.volume = .62;
         sound.play().catch(() => {});
       } catch { /* El juego continúa aunque el dispositivo no permita reproducir audio. */ }
